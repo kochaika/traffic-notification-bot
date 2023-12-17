@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  traffic-checker:
+    image: traffic-checker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./config.ini:/config.ini
+      - /etc/TZ:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - net
+    restart: always
+    depends_on:
+      selenium-grid:
+        condition: service_healthy
+
+  selenium-grid:
+    image: selenium/standalone-chrome:latest
+    shm_size: 1gb
+    volumes:
+      - /etc/TZ:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - net
+    restart: always
+    healthcheck:
+      test: /opt/bin/check-grid.sh --host 0.0.0.0 --port 4444
+      interval: 15s
+      retries: 5
+      start_period: 10s
+      timeout: 30s
+
+networks:
+  net:
